@@ -75,9 +75,10 @@ function AppContent() {
 
                 <Button
                   variant="ghost"
-                  onClick={() => setShowGuidelines(true)}
+                  onClick={() => setShowGuidelines(!showGuidelines)}
                   size="sm"
                   className="gap-1.5"
+                  data-active={showGuidelines}
                 >
                   <BookOpen className="h-4 w-4" />
                   Guidelines
@@ -101,7 +102,7 @@ function AppContent() {
       </main>
 
       {/* Guidelines Sidebar */}
-      <GuidelinesSidebar key={showGuidelines ? 'open' : 'closed'} />
+      <GuidelinesSidebar isOpen={showGuidelines} onClose={() => setShowGuidelines(false)} />
     </div>
   )
 }
