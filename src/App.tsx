@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AttemptFormV2 } from './components/forms/AttemptFormV2'
@@ -13,12 +13,19 @@ import { ProgressView } from './components/views/ProgressView'
 import { PhaseTimer } from './components/widgets/PhaseTimer'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Button } from './components/ui/button'
-import { TimerProvider } from '@/lib/TimerContext'
 import './App.css'
 
 type View = 'form' | 'history' | 'stats' | 'analytics' | 'russian' | 'dictionary' | 'guidelines' | 'review' | 'progress'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 function AppContent() {
   const [view, setView] = useState<View>('form')
@@ -157,9 +164,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="mastery-ui-theme">
       <QueryClientProvider client={queryClient}>
-        <TimerProvider> {/* Wrap here */}
-          <AppContent />
-        </TimerProvider>
+        <AppContent />
       </QueryClientProvider>
     </ThemeProvider>
   )

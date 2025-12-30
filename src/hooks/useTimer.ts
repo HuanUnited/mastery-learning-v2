@@ -7,7 +7,7 @@ interface TimerState {
   // Current state
   phase: Phase
   isRunning: boolean
-  elapsedMs: number // Changed to milliseconds
+  elapsedMs: number
   startTime: number | null
 
   // Captured time (when user stops timer)
@@ -39,24 +39,25 @@ export const useTimer = create<TimerState>()(
       startTime: null,
       capturedMinutes: null,
       phaseDurations: {
-        discovery: 10,  // 10 min
-        drilling: 20,   // 20 min
-        integration: 10 // 10 min
+        discovery: 10,
+        drilling: 20,
+        integration: 10
       },
 
       start: () => {
-        // Clear any existing interval
         if (timerInterval) {
           clearInterval(timerInterval)
         }
 
+        const currentElapsed = get().elapsedMs
+        const now = Date.now()
+
         set({
           isRunning: true,
-          startTime: Date.now(),
+          startTime: now - currentElapsed, // Preserve elapsed time
           capturedMinutes: null,
         })
 
-        // Update elapsed time every 10ms for smooth display
         timerInterval = setInterval(() => {
           const state = get()
           if (!state.isRunning || !state.startTime) {
@@ -101,10 +102,9 @@ export const useTimer = create<TimerState>()(
       },
 
       setPhase: (phase) => {
-        const { isRunning } = get()
+        const { isRunning, stop } = get()
         if (isRunning) {
-          // Auto-stop when switching phases
-          get().stop()
+          stop()
         }
 
         set({
@@ -126,10 +126,14 @@ export const useTimer = create<TimerState>()(
     }),
     {
       name: 'mastery-timer',
-      // Don't persist running state or elapsed time
       partialize: (state) => ({
         phase: state.phase,
         phaseDurations: state.phaseDurations,
+        // Persist elapsedMs when stopped
+        ...(state.capturedMinutes !== null && {
+          elapsedMs: state.elapsedMs,
+          capturedMinutes: state.capturedMinutes
+        })
       }),
     }
   )

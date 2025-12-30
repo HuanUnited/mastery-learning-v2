@@ -222,3 +222,22 @@ main {
   padding: 0;
   min-height: calc(100vh - 64px);
 }
+
+/* Existing styles... keep everything, just add/update these: */
+
+/* Active navigation button state */
+.gradient-nav Button[data-active="true"] {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
+}
+
+.gradient-nav Button[data-active="false"]:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure text is always visible */
+.gradient-nav Button {
+  color: white;
+  transition: all 0.2s ease;
+}

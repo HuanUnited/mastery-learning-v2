@@ -1,138 +1,179 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Clock, Target } from 'lucide-react';
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import { BaseView, ViewCard } from '@/components/layouts'
+import { Badge } from '@/components/ui/badge'
+import { TrendingUp, TrendingDown, Clock, Target } from 'lucide-react'
+import { formatDuration, formatPercentage } from '@/lib/utils'
 
 export function ProgressView() {
-  const { data: stats } = useQuery({
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable')
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['material-stats'],
     queryFn: api.getAllMaterialStats,
-  });
+  })
 
-  const { data: problems } = useQuery({
+  const { data: problems, isLoading: problemsLoading } = useQuery({
     queryKey: ['recent-problems', 100],
     queryFn: () => api.getRecentProblems(100),
-  });
+  })
+
+  const isLoading = statsLoading || problemsLoading
 
   // Calculate learning velocity per material
   const velocityData = stats?.map((material) => {
     const materialProblems = problems?.filter(
       (p) => p.material_name === material.material_name
-    );
+    ) || []
 
-    const batchStats = materialProblems?.reduce((acc, problem) => {
+    const batchStats: Record<number, { total: number; successful: number }> = {}
+    
+    materialProblems.forEach((problem) => {
       problem.attempts.forEach((attempt) => {
-        if (!acc[attempt.batchnumber]) {
-          acc[attempt.batchnumber] = { total: 0, successful: 0 };
+        if (!batchStats[attempt.batch_number]) {
+          batchStats[attempt.batch_number] = { total: 0, successful: 0 }
         }
-        acc[attempt.batchnumber].total++;
-        if (attempt.successful) acc[attempt.batchnumber].successful++;
-      });
-      return acc;
-    }, {});
+        batchStats[attempt.batch_number].total++
+        if (attempt.successful) batchStats[attempt.batch_number].successful++
+      })
+    })
 
-    const batches = Object.entries(batchStats || {}).map(([num, data]) => ({
+    const batches = Object.entries(batchStats).map(([num, data]) => ({
       batch: Number(num),
       successRate: (data.successful / data.total) * 100,
       attempts: data.total,
-    }));
+    }))
 
     return {
-      material: material.materialname,
-      subject: material.subjectname,
+      material: material.material_name,
+      subject: material.subject_name,
       batches: batches.sort((a, b) => a.batch - b.batch),
-      avgAttempts: material.avgattemptsperproblem,
-      totalTime: material.totaltimeminutes,
-    };
-  });
+      avgAttempts: material.avg_attempts_per_problem,
+      totalTime: material.total_time_minutes,
+    }
+  }) || []
 
   // Difficulty hotspots
   const hotspots = stats
-    ?.filter((m) => m.avgattemptsperproblem > 3)
-    .sort((a, b) => b.avgattemptsperproblem - a.avgattemptsperproblem);
+    ?.filter((m) => m.avg_attempts_per_problem > 3)
+    .sort((a, b) => b.avg_attempts_per_problem - a.avg_attempts_per_problem) || []
 
   // Time efficiency trends
   const timeEfficiency = problems
-    ?.filter((p) => p.issolved)
+    ?.filter((p) => p.is_solved)
     .map((p) => ({
       title: p.title,
       totalAttempts: p.attempts.length,
-      totalTime: p.attempts.reduce((sum, a) => sum + a.timespentminutes, 0),
-      avgTimePerAttempt: p.attempts.reduce((sum, a) => sum + a.timespentminutes, 0) / p.attempts.length,
+      totalTime: p.attempts.reduce((sum, a) => sum + (a.time_spent_minutes || 0), 0),
+      avgTimePerAttempt: p.attempts.reduce((sum, a) => sum + (a.time_spent_minutes || 0), 0) / p.attempts.length,
     }))
     .sort((a, b) => b.totalTime - a.totalTime)
-    .slice(0, 10);
+    .slice(0, 10) || []
+
+  const masteredCount = stats?.filter((m) => m.success_rate >= 80).length || 0
+  const avgSuccess = stats?.length
+    ? stats.reduce((sum, m) => sum + m.success_rate, 0) / stats.length
+    : 0
+  const totalTimeMinutes = stats?.reduce((sum, m) => sum + m.total_time_minutes, 0) || 0
+
+  if (isLoading) {
+    return (
+      <BaseView title="Learning Progress" density={density}>
+        <p className="text-muted-foreground">Loading progress data...</p>
+      </BaseView>
+    )
+  }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-4">
-      <h2 className="text-2xl font-bold">Learning Progress</h2>
-
+    <BaseView 
+      title="Learning Progress"
+      density={density}
+      actions={
+        <Badge 
+          variant="outline" 
+          className="cursor-pointer"
+          onClick={() => setDensity(d => d === 'comfortable' ? 'compact' : 'comfortable')}
+        >
+          {density === 'compact' ? '☰ Compact' : '⊟ Comfortable'}
+        </Badge>
+      }
+    >
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-muted-foreground">Mastered</span>
+      <div className={`grid grid-cols-2 md:grid-cols-4 ${density === 'compact' ? 'gap-2' : 'gap-3'}`}>
+        <ViewCard density={density}>
+          <div className={`flex items-center gap-2 mb-1 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            <Target className={`text-green-500 ${density === 'compact' ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className="text-muted-foreground">Mastered</span>
           </div>
-          <div className="text-2xl font-bold">
-            {stats?.filter((m) => m.successrate >= 80).length || 0}
+          <div className={`font-bold ${density === 'compact' ? 'text-xl' : 'text-2xl'}`}>
+            {masteredCount}
           </div>
-          <div className="text-xs text-muted-foreground">materials</div>
-        </Card>
+          <div className={`text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            materials
+          </div>
+        </ViewCard>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-muted-foreground">Avg Success</span>
+        <ViewCard density={density}>
+          <div className={`flex items-center gap-2 mb-1 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            <TrendingUp className={`text-blue-500 ${density === 'compact' ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className="text-muted-foreground">Avg Success</span>
           </div>
-          <div className="text-2xl font-bold">
-            {stats?.length
-              ? (stats.reduce((sum, m) => sum + m.successrate, 0) / stats.length).toFixed(0)
-              : 0}%
+          <div className={`font-bold ${density === 'compact' ? 'text-xl' : 'text-2xl'}`}>
+            {formatPercentage(avgSuccess / 100, 0)}
           </div>
-          <div className="text-xs text-muted-foreground">across all materials</div>
-        </Card>
+          <div className={`text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            across all materials
+          </div>
+        </ViewCard>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="h-4 w-4 text-orange-500" />
-            <span className="text-xs text-muted-foreground">Total Time</span>
+        <ViewCard density={density}>
+          <div className={`flex items-center gap-2 mb-1 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            <Clock className={`text-orange-500 ${density === 'compact' ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className="text-muted-foreground">Total Time</span>
           </div>
-          <div className="text-2xl font-bold">
-            {((stats?.reduce((sum, m) => sum + m.totaltimeminutes, 0) || 0) / 60).toFixed(1)}h
+          <div className={`font-bold ${density === 'compact' ? 'text-xl' : 'text-2xl'}`}>
+            {formatDuration(totalTimeMinutes)}
           </div>
-          <div className="text-xs text-muted-foreground">invested</div>
-        </Card>
+          <div className={`text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            invested
+          </div>
+        </ViewCard>
 
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingDown className="h-4 w-4 text-red-500" />
-            <span className="text-xs text-muted-foreground">Hotspots</span>
+        <ViewCard density={density}>
+          <div className={`flex items-center gap-2 mb-1 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            <TrendingDown className={`text-red-500 ${density === 'compact' ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className="text-muted-foreground">Hotspots</span>
           </div>
-          <div className="text-2xl font-bold">{hotspots?.length || 0}</div>
-          <div className="text-xs text-muted-foreground">need focus</div>
-        </Card>
+          <div className={`font-bold ${density === 'compact' ? 'text-xl' : 'text-2xl'}`}>
+            {hotspots.length}
+          </div>
+          <div className={`text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+            need focus
+          </div>
+        </ViewCard>
       </div>
 
       {/* Learning Velocity */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3">Learning Velocity</h3>
-        <p className="text-xs text-muted-foreground mb-3">
+      <ViewCard 
+        title="Learning Velocity"
+        density={density}
+      >
+        <p className={`text-muted-foreground mb-3 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
           Success rate improvement across batches
         </p>
 
-        <div className="space-y-3">
-          {velocityData?.slice(0, 8).map((data) => (
-            <div key={data.material} className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
+        <div className={density === 'compact' ? 'space-y-2' : 'space-y-3'}>
+          {velocityData.slice(0, 8).map((data) => (
+            <div key={data.material} className={density === 'compact' ? 'space-y-1' : 'space-y-1.5'}>
+              <div className={`flex items-center justify-between ${density === 'compact' ? 'text-xs' : 'text-sm'}`}>
                 <span className="font-medium truncate">{data.material}</span>
-                <span className="text-xs text-muted-foreground shrink-0">
+                <span className={`text-muted-foreground shrink-0 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
                   {data.batches.length} batches
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 h-6">
+              <div className={`flex items-center gap-1 ${density === 'compact' ? 'h-4' : 'h-6'}`}>
                 {data.batches.map((batch, idx) => (
                   <div
                     key={idx}
@@ -151,67 +192,81 @@ export function ProgressView() {
                 ))}
               </div>
 
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className={`flex justify-between text-muted-foreground ${density === 'compact' ? 'text-[9px]' : 'text-[10px]'}`}>
                 <span>Batch 1</span>
                 <span>Latest</span>
               </div>
             </div>
           ))}
         </div>
-      </Card>
+      </ViewCard>
 
       {/* Difficulty Hotspots */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <TrendingDown className="h-5 w-5 text-red-500" />
-          Difficulty Hotspots
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">
+      <ViewCard 
+        title="Difficulty Hotspots"
+        density={density}
+      >
+        <p className={`text-muted-foreground mb-2 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
           Materials requiring &gt;3 attempts on average
         </p>
 
-        <div className="space-y-2">
-          {hotspots?.slice(0, 8).map((material) => (
-            <div key={material.materialid} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/10 rounded">
+        <div className={density === 'compact' ? 'space-y-1.5' : 'space-y-2'}>
+          {hotspots.slice(0, 8).map((material) => (
+            <div 
+              key={material.material_id} 
+              className={`flex items-center gap-2 bg-red-50 dark:bg-red-900/10 rounded ${density === 'compact' ? 'p-1.5' : 'p-2'}`}
+            >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{material.materialname}</p>
-                <p className="text-xs text-muted-foreground">{material.subjectname}</p>
+                <p className={`font-medium truncate ${density === 'compact' ? 'text-xs' : 'text-sm'}`}>
+                  {material.material_name}
+                </p>
+                <p className={`text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
+                  {material.subject_name}
+                </p>
               </div>
-              <Badge variant="destructive" className="text-xs shrink-0">
-                {material.avgattemptsperproblem.toFixed(1)} avg attempts
+              <Badge 
+                variant="destructive" 
+                className={`shrink-0 ${density === 'compact' ? 'text-[10px] px-1.5 py-0' : 'text-xs'}`}
+              >
+                {material.avg_attempts_per_problem.toFixed(1)} avg
               </Badge>
             </div>
           ))}
         </div>
-      </Card>
+      </ViewCard>
 
       {/* Time Efficiency */}
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-orange-500" />
-          Time Investment
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">
+      <ViewCard 
+        title="Time Investment"
+        density={density}
+      >
+        <p className={`text-muted-foreground mb-2 ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
           Problems with highest time investment
         </p>
 
-        <div className="space-y-2">
-          {timeEfficiency?.map((prob, idx) => (
+        <div className={density === 'compact' ? 'space-y-1.5' : 'space-y-2'}>
+          {timeEfficiency.map((prob, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-5">{idx + 1}</span>
+              <span className={`text-muted-foreground ${density === 'compact' ? 'w-4 text-[10px]' : 'w-5 text-xs'}`}>
+                {idx + 1}
+              </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{prob.title}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <p className={`font-medium truncate ${density === 'compact' ? 'text-xs' : 'text-sm'}`}>
+                  {prob.title}
+                </p>
+                <div className={`flex items-center gap-2 text-muted-foreground ${density === 'compact' ? 'text-[10px]' : 'text-xs'}`}>
                   <span>{prob.totalAttempts} attempts</span>
                   <span>•</span>
-                  <span>{prob.avgTimePerAttempt.toFixed(1)} min/attempt</span>
+                  <span>{formatDuration(prob.avgTimePerAttempt)}/attempt</span>
                 </div>
               </div>
-              <span className="text-sm font-bold shrink-0">{prob.totalTime.toFixed(0)}m</span>
+              <span className={`font-bold shrink-0 ${density === 'compact' ? 'text-xs' : 'text-sm'}`}>
+                {formatDuration(prob.totalTime)}
+              </span>
             </div>
           ))}
         </div>
-      </Card>
-    </div>
-  );
+      </ViewCard>
+    </BaseView>
+  )
 }
