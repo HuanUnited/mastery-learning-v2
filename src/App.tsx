@@ -1,27 +1,23 @@
 import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
-import { AttemptFormV2 } from './components/forms/AttemptFormV2'
-import { HistoryView } from './components/views/HistoryView'
-import { StatsView } from './components/views/StatsView'
-import { AnalyticsView } from './components/views/AnalyticsView'
-import { RussianDrillView } from './components/views/RussianDrillView'
-import { DictionaryView } from './components/views/DictionaryView'
-import { GuidelinesView } from './components/views/GuidelinesView'
-import { ReviewView } from './components/views/ReviewView'
-import { ProgressView } from './components/views/ProgressView'
+import { DashboardView } from './components/views/DashboardView'
+import { LearningView } from './components/views/LearningView'
+import { RussianView } from './components/views/RussianView'
+import { GuidelinesSidebar } from './components/widgets/GuidelinesSidebar'
 import { PhaseTimer } from './components/widgets/PhaseTimer'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Button } from './components/ui/button'
+import { BookOpen } from 'lucide-react'
 import './App.css'
 
-type View = 'form' | 'history' | 'stats' | 'analytics' | 'russian' | 'dictionary' | 'guidelines' | 'review' | 'progress'
+type View = 'dashboard' | 'learning' | 'russian'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
       refetchOnWindowFocus: false,
       retry: 1,
       refetchOnReconnect: true,
@@ -33,7 +29,8 @@ const queryClient = new QueryClient({
 })
 
 function AppContent() {
-  const [view, setView] = useState<View>('form')
+  const [view, setView] = useState<View>('dashboard')
+  const [showGuidelines, setShowGuidelines] = useState(false)
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,99 +45,47 @@ function AppContent() {
               </div>
 
               {/* Navigation Buttons - Center */}
-              <div className="flex items-center gap-2 flex-wrap justify-center flex-1 min-w-0 overflow-x-auto">
+              <div className="flex items-center gap-2 flex-1 justify-center">
                 <Button
                   variant="ghost"
-                  onClick={() => setView('form')}
+                  onClick={() => setView('dashboard')}
                   size="sm"
-                  className="shrink-0"
-                  data-active={view === 'form'}
+                  data-active={view === 'dashboard'}
                 >
-                  Log Attempt
+                  Dashboard
                 </Button>
 
                 <Button
                   variant="ghost"
-                  onClick={() => setView('history')}
+                  onClick={() => setView('learning')}
                   size="sm"
-                  className="shrink-0"
-                  data-active={view === 'history'}
+                  data-active={view === 'learning'}
                 >
-                  History
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => setView('review')}
-                  size="sm"
-                  className="shrink-0"
-                  data-active={view === 'review'}
-                >
-                  Review
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => setView('stats')}
-                  size="sm"
-                  className="shrink-0"
-                  data-active={view === 'stats'}
-                >
-                  Stats
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => setView('progress')}
-                  size="sm"
-                  className="shrink-0"
-                  data-active={view === 'progress'}
-                >
-                  Progress
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => setView('analytics')}
-                  size="sm"
-                  className="shrink-0"
-                  data-active={view === 'analytics'}
-                >
-                  Analytics
+                  Learning
                 </Button>
 
                 <Button
                   variant="ghost"
                   onClick={() => setView('russian')}
                   size="sm"
-                  className="shrink-0"
                   data-active={view === 'russian'}
                 >
-                  Russian Drill
+                  Russian
                 </Button>
 
                 <Button
                   variant="ghost"
-                  onClick={() => setView('dictionary')}
+                  onClick={() => setShowGuidelines(!showGuidelines)}
                   size="sm"
-                  className="shrink-0"
-                  data-active={view === 'dictionary'}
+                  className="gap-1.5"
+                  data-active={showGuidelines}
                 >
-                  Dictionary
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  onClick={() => setView('guidelines')}
-                  size="sm"
-                  className="shrink-0"
-                  data-active={view === 'guidelines'}
-                >
+                  <BookOpen className="h-4 w-4" />
                   Guidelines
                 </Button>
               </div>
 
-              {/* Dark Mode Toggle - Right */}
+              {/* Theme Toggle - Right */}
               <div className="shrink-0">
                 <ThemeToggle />
               </div>
@@ -151,16 +96,13 @@ function AppContent() {
 
       {/* Content */}
       <main>
-        {view === 'form' && <AttemptFormV2 />}
-        {view === 'history' && <HistoryView />}
-        {view === 'review' && <ReviewView />}
-        {view === 'stats' && <StatsView />}
-        {view === 'progress' && <ProgressView />}
-        {view === 'analytics' && <AnalyticsView />}
-        {view === 'russian' && <RussianDrillView />}
-        {view === 'dictionary' && <DictionaryView />}
-        {view === 'guidelines' && <GuidelinesView />}
+        {view === 'dashboard' && <DashboardView />}
+        {view === 'learning' && <LearningView />}
+        {view === 'russian' && <RussianView />}
       </main>
+
+      {/* Guidelines Sidebar */}
+      <GuidelinesSidebar isOpen={showGuidelines} onClose={() => setShowGuidelines(false)} />
     </div>
   )
 }

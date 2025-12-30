@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTimer } from '@/hooks/useTimer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Play, Pause, RotateCcw, Pin, PinOff } from 'lucide-react'
-import { useMemo } from 'react'
 
 export function PhaseTimer() {
   const { 
@@ -20,11 +19,26 @@ export function PhaseTimer() {
   
   const [isPinned, setIsPinned] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const isExpanded = isPinned || isHovered
   const targetMs = phaseDurations[phase] * 60000
   const remainingMs = Math.max(0, targetMs - elapsedMs)
   const isOvertime = elapsedMs > targetMs
+
+  // Click outside to close (only if not pinned)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isPinned && cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsHovered(false)
+      }
+    }
+
+    if (isExpanded && !isPinned) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isExpanded, isPinned])
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000)
@@ -34,18 +48,21 @@ export function PhaseTimer() {
     return { minutes, seconds, milliseconds }
   }
 
-  const elapsed = useMemo(() => formatTime(elapsedMs), [elapsedMs])
-  const remaining = useMemo(() => formatTime(remainingMs), [remainingMs])
+  const elapsed = formatTime(elapsedMs)
+  const remaining = formatTime(remainingMs)
 
   return (
     <div 
       className="relative"
+      ref={cardRef}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={() => !isPinned && setIsHovered(true)} // FIXED: Click to open
+      onMouseLeave={() => !isPinned && setIsHovered(false)}
     >
-      {/* Compact Display - FIXED: White text always visible */}
-      <div className="flex items-center gap-2 bg-white/20 dark:bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30 cursor-pointer hover:bg-white/30 dark:hover:bg-black/30 transition-colors">
+      {/* Compact Display */}
+      <div 
+        className="flex items-center gap-2 bg-white/20 dark:bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30 cursor-pointer hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+        onClick={() => setIsHovered(true)}
+      >
         <div className="font-mono text-sm text-white font-semibold drop-shadow-md">
           {String(elapsed.minutes).padStart(2, '0')}:{String(elapsed.seconds).padStart(2, '0')}
         </div>
@@ -62,11 +79,11 @@ export function PhaseTimer() {
         </Button>
       </div>
 
-      {/* Expanded Dropdown - FIXED: Stays open when clicked */}
+      {/* Expanded Dropdown */}
       {isExpanded && (
         <Card 
           className="absolute top-full mt-2 left-0 w-80 p-4 z-50 shadow-xl bg-background border animate-in fade-in slide-in-from-top-2 duration-200"
-          onClick={(e) => e.stopPropagation()} // FIXED: Prevent closing when clicking inside
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Pin Button */}
           <div className="flex justify-end mb-2">
