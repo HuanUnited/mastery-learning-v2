@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { useTimer } from '@/lib/TimerContext'
+import { useTimer } from '@/hooks/useTimer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -53,7 +53,7 @@ export function AttemptFormV2() {
 
   // Attempt data (resets)
   const [successful, setSuccessful] = useState(false)
-  const [timeSpent, setTimeSpent] = useState<number | undefined>()
+  const [timeSpent, setTimeSpent] = useState<string>('')
   const [difficulty, setDifficulty] = useState<number>()
   const [errors, setErrors] = useState('')
   const [resolution, setResolution] = useState('')
@@ -72,11 +72,6 @@ export function AttemptFormV2() {
   const [subjectInputValue, setSubjectInputValue] = useState('')
   const [materialInputValue, setMaterialInputValue] = useState('')
   const [problemInputValue, setProblemInputValue] = useState('')
-
-  // Time
-
-
-
 
   // Queries
   const { data: subjects } = useQuery({
@@ -118,34 +113,33 @@ export function AttemptFormV2() {
   }, [capturedMinutes])
 
   // Load existing problem data when selected
-// Load existing problem data when selected
-const loadExistingProblem = async (problemId: number) => {
-  try {
-    const problemDetail = await api.getProblemById(problemId)
-    
-    setProblemDescription(problemDetail.description || '')
-    
-    if (problemDetail.image_filename) {
-      setExistingImageFilename(problemDetail.image_filename)
-      try {
-        const imagePath = await api.getProblemImagePath(problemDetail.image_filename)
-        const assetUrl = convertFileSrc(imagePath)
-        setImagePreview(assetUrl)
-      } catch (error) {
-        console.error('Failed to load existing image:', error)
+  const loadExistingProblem = async (problemId: number) => {
+    try {
+      const problemDetail = await api.getProblemById(problemId)
+      
+      setProblemDescription(problemDetail.description || '')
+      
+      if (problemDetail.image_filename) {
+        setExistingImageFilename(problemDetail.image_filename)
+        try {
+          const imagePath = await api.getProblemImagePath(problemDetail.image_filename)
+          const assetUrl = convertFileSrc(imagePath)
+          setImagePreview(assetUrl)
+        } catch (error) {
+          console.error('Failed to load existing image:', error)
+          setImagePreview(null)
+        }
+      } else {
+        setExistingImageFilename(null)
         setImagePreview(null)
       }
-    } else {
-      setExistingImageFilename(null)
+    } catch (error) {
+      console.error('Failed to load problem details:', error)
+      setProblemDescription('')
       setImagePreview(null)
+      setExistingImageFilename(null)
     }
-  } catch (error) {
-    console.error('Failed to load problem details:', error)
-    setProblemDescription('')
-    setImagePreview(null)
-    setExistingImageFilename(null)
   }
-}
 
   // Image preview for new uploads
   const handleImageChange = (file: File | null) => {
@@ -559,6 +553,7 @@ const loadExistingProblem = async (problemId: number) => {
                   value={timeSpent}
                   onChange={(e) => setTimeSpent(e.target.value)}
                   placeholder="5.5"
+                  className={capturedMinutes !== null ? 'bg-green-50 dark:bg-green-900/20 border-green-500/50' : ''}
                 />
               </div>
 

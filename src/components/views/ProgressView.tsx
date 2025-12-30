@@ -18,7 +18,7 @@ export function ProgressView() {
   // Calculate learning velocity per material
   const velocityData = stats?.map((material) => {
     const materialProblems = problems?.filter(
-      (p) => p.materialname === material.materialname
+      (p) => p.material_name === material.material_name
     );
 
     const batchStats = materialProblems?.reduce((acc, problem) => {

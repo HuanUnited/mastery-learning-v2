@@ -59,7 +59,7 @@ export function ReviewView() {
 
   // Group by material
   const materialGroups = filteredProblems?.reduce((acc, problem) => {
-    const key = `${problem.subjectname} - ${problem.materialname}`;
+    const key = `${problem.subject_name} - ${problem.material_name}`;
     if (!acc[key]) acc[key] = [];
     acc[key].push(problem);
     return acc;
@@ -193,10 +193,10 @@ export function ReviewView() {
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-sm truncate">{problem.title}</h4>
                   <p className="text-xs text-muted-foreground">
-                    {problem.subjectname} • {problem.materialname}
+                    {problem.subject_name} • {problem.material_name}
                   </p>
                 </div>
-                <Badge variant={problem.issolved ? 'default' : 'secondary'} className="text-xs shrink-0">
+                <Badge variant={problem.is_solved ? 'default' : 'secondary'} className="text-xs shrink-0">
                   {problem.recentAttempts.length} recent
                 </Badge>
               </div>
@@ -213,7 +213,7 @@ export function ReviewView() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-[10px]">
-                        {attempt.successful ? '✓' : '✗'} #{attempt.attemptnumber}
+                        {attempt.successful ? '✓' : '✗'} #{attempt.attempt_number}
                       </span>
                       <span className="text-muted-foreground text-[10px]">
                         {new Date(attempt.timestamp).toLocaleDateString()}
