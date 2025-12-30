@@ -53,23 +53,6 @@
   transform: none;
 }
 
-/* Dark Mode Toggle Button in Nav */
-.gradient-nav button[aria-label*="theme"],
-.gradient-nav button[aria-label*="Toggle"] {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.5rem;
-  min-width: 2.5rem;
-}
-
-.gradient-nav button[aria-label*="theme"]:hover,
-.gradient-nav button[aria-label*="Toggle"]:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
-
 /* Mastery Achievement Styling */
 .mastery-achieved {
   background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
@@ -95,12 +78,9 @@
 }
 
 @keyframes glow {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
   }
-
   50% {
     box-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
   }
@@ -148,12 +128,12 @@ select {
 }
 
 /* Hide scrollbar in nav but keep functionality */
-.gradient-nav-inner>div {
+.gradient-nav-inner > div {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.gradient-nav-inner>div::-webkit-scrollbar {
+.gradient-nav-inner > div::-webkit-scrollbar {
   display: none;
 }
 
