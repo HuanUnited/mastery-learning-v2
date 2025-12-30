@@ -1,0 +1,224 @@
+/* ===== MASTERY LEARNING APP STYLES ===== */
+
+/* Gradient Navbar */
+.gradient-nav {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+  position: relative;
+  border-bottom: 1px solid rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.gradient-nav::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.1), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.gradient-nav-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Nav Button Styles - DEFAULT STATE */
+.gradient-nav button[data-state],
+.gradient-nav button {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: transparent;
+  background-color: transparent;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Nav Button - HOVER STATE */
+.gradient-nav button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Nav Button - ACTIVE/SELECTED STATE (This fixes highlighting!) */
+.gradient-nav button[data-active="true"] {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark Mode Toggle Button in Nav */
+.gradient-nav button[aria-label*="theme"] {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem;
+  min-width: 2.5rem;
+}
+
+.gradient-nav button[aria-label*="theme"]:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Mastery Achievement Styling */
+.mastery-achieved {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3) !important;
+}
+
+.dark .mastery-achieved {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.2), rgba(253, 230, 138, 0.2)) !important;
+  border-color: #fbbf24 !important;
+  color: #fde68a !important;
+}
+
+/* Mastery Badge with Glow Animation */
+.mastery-badge {
+  background: #fbbf24;
+  color: #78350f;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+  animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
+  }
+}
+
+.dark .mastery-badge {
+  background: #fbbf24;
+  color: #1e293b;
+}
+
+/* Compact View Utilities */
+.compact-view {
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+.compact-card {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted) / 0.3);
+}
+
+/* Smooth Transitions */
+button,
+a,
+input,
+textarea,
+select {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hide scrollbar in nav but keep functionality */
+.gradient-nav-inner>div {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.gradient-nav-inner>div::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
+}
+
+/* Dark Mode Smooth Transition */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .gradient-nav-inner .max-w-7xl {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .gradient-nav button {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .gradient-nav .flex.items-center {
+    gap: 0.5rem;
+  }
+}
+
+/* Dark Mode Specific Nav Adjustments */
+@media (prefers-color-scheme: dark) {
+  .gradient-nav {
+    border-bottom-color: rgba(79, 70, 229, 0.5);
+  }
+}
+
+/* STRONGER ACTIVE STATE - Add this at the bottom */
+.gradient-nav button[data-active="true"] {
+  background: rgba(255, 255, 255, 0.35) !important;
+  color: white !important;
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 255, 255, 0.6) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Phase Timer compact styling */
+.phase-timer-compact {
+  font-size: 0.875rem;
+}
+
+/* Remove padding from main content */
+main {
+  padding: 0;
+  min-height: calc(100vh - 64px);
+}
