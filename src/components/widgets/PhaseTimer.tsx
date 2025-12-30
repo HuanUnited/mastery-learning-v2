@@ -3,6 +3,7 @@ import { useTimer } from '@/hooks/useTimer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Play, Pause, RotateCcw, Pin, PinOff } from 'lucide-react'
+import { useMemo } from 'react'
 
 export function PhaseTimer() {
   const { 
@@ -29,28 +30,29 @@ export function PhaseTimer() {
     const totalSeconds = Math.floor(ms / 1000)
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
-    const milliseconds = Math.floor((ms % 1000) / 10) // 2 digits
+    const milliseconds = Math.floor((ms % 1000) / 10)
     return { minutes, seconds, milliseconds }
   }
 
-  const elapsed = formatTime(elapsedMs)
-  const remaining = formatTime(remainingMs)
+  const elapsed = useMemo(() => formatTime(elapsedMs), [elapsedMs])
+  const remaining = useMemo(() => formatTime(remainingMs), [remainingMs])
 
   return (
     <div 
       className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => !isPinned && setIsHovered(true)} // FIXED: Click to open
     >
-      {/* Compact Display */}
-      <div className="flex items-center gap-2 bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10 cursor-pointer">
-        <div className="font-mono text-sm text-white font-semibold">
+      {/* Compact Display - FIXED: White text always visible */}
+      <div className="flex items-center gap-2 bg-white/20 dark:bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30 cursor-pointer hover:bg-white/30 dark:hover:bg-black/30 transition-colors">
+        <div className="font-mono text-sm text-white font-semibold drop-shadow-md">
           {String(elapsed.minutes).padStart(2, '0')}:{String(elapsed.seconds).padStart(2, '0')}
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-white hover:bg-white/20"
+          className="h-6 w-6 text-white hover:bg-white/30 dark:hover:bg-white/20"
           onClick={(e) => {
             e.stopPropagation()
             isRunning ? stop() : start()
@@ -60,9 +62,12 @@ export function PhaseTimer() {
         </Button>
       </div>
 
-      {/* Expanded Dropdown */}
+      {/* Expanded Dropdown - FIXED: Stays open when clicked */}
       {isExpanded && (
-        <Card className="absolute top-full mt-2 left-0 w-80 p-4 z-50 shadow-xl bg-background/95 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
+        <Card 
+          className="absolute top-full mt-2 left-0 w-80 p-4 z-50 shadow-xl bg-background border animate-in fade-in slide-in-from-top-2 duration-200"
+          onClick={(e) => e.stopPropagation()} // FIXED: Prevent closing when clicking inside
+        >
           {/* Pin Button */}
           <div className="flex justify-end mb-2">
             <Button
